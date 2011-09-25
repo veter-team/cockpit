@@ -1,0 +1,310 @@
+
+toanaglyph.cpp,214
+CopySubImage(IplImage *src,CopySubImage5,36
+toAnaglyph(IplImage *imgLeft, IplImage *imgRight)toAnaglyph29,539
+frameToAnaglyph(unsigned char *data, size_t framewidth, size_t frameheight)frameToAnaglyph65,1546
+
+ServerThread.cpp,451
+static const char* CONFIG_PARAM = "--Ice.Config=cockpit.config";CONFIG_PARAM7,122
+ServerThread::ServerThread(Ice::Application *a, int ac, char **av)ServerThread10,189
+ServerThread::~ServerThread()~ServerThread51,1403
+ServerThread::getStringProperty(const std::string &prop_name) constgetStringProperty58,1475
+ServerThread::getStringListProperty(const std::string &prop_name) constgetStringListProperty65,1611
+ServerThread::run()run72,1747
+
+GstMainThread.cpp,637
+GST_DEBUG_CATEGORY (cockpit_video_debug);cockpit_video_debug12,216
+#define GST_CAT_DEFAULT GST_CAT_DEFAULT13,258
+int ThreadFunction(void *data)ThreadFunction16,304
+GstMainThread::GstMainThread(int ac, GstMainThread23,405
+GstMainThread::create(int ac, create43,867
+GstMainThread::requestShutdown()requestShutdown75,1712
+GstMainThread::join()join85,1929
+bus_message(GstBus * bus, GstMessage * message, GstMainThread *thread)bus_message94,2049
+on_gst_buffer(GstElement *element,on_gst_buffer131,2846
+feed_data(GstElement *appsrc, guint size, BufferQueue *buffer_queue)feed_data146,3211
+GstMainThread::run()run166,3614
+
+RouterHelper.h,350
+#define __ROUTERHELPER_H__ROUTERHELPER_H6,120
+class RouterHelper : public IceUtil::SharedRouterHelper14,253
+  Glacier2::RouterPrx getRouter() { return this->router; }getRouter22,444
+  Glacier2::RouterPrx router;router25,514
+  std::string category;category26,544
+typedef IceUtil::Handle<RouterHelper> RouterHelperPtr;RouterHelperPtr29,572
+
+TxtAreaPainter.cpp,121
+TxtAreaPainter::TxtAreaPainter()TxtAreaPainter8,125
+TxtAreaPainter::addString(const std::string &msg)addString14,170
+
+GPSPosQueue.h,221
+#define __GPSPOSQUEUE_H__GPSPOSQUEUE_H6,119
+struct GPSPositionGPSPosition10,164
+  float lat;lat12,185
+  float longit;longit13,198
+  float alt;alt14,214
+typedef Queue<GPSPosition> GPSPosQueue;GPSPosQueue16,230
+
+RangeMap.h,120
+#define __RANGEMAP_H__RANGEMAP_H2,21
+range_map(sourceT a, sourceT b, targetT c, targetT d, sourceT x)range_map7,140
+
+RouterHelper.cpp,199
+RouterHelper::RouterHelper(const Ice::CommunicatorPtr& communicator)RouterHelper8,123
+RouterHelper::~RouterHelper()~RouterHelper26,595
+RouterHelper::makeId(const std::string& name)makeId42,864
+
+SetStatusMsgCmd.h,204
+#define __SETSTATUSMSGCMD_H__SETSTATUSMSGCMD_H6,123
+class SetStatusMsgCmd : public AbstractCommandSetStatusMsgCmd14,224
+  TxtAreaPainter *painter;painter23,391
+  std::string message;message24,418
+
+main.cpp,2344
+#define GL_SGIX_fragment_lightingGL_SGIX_fragment_lighting10,238
+#define SCREEN_WIDTH SCREEN_WIDTH34,773
+#define SCREEN_HEIGHT SCREEN_HEIGHT35,800
+#define SCREEN_BPP SCREEN_BPP36,826
+#define STEERING_TIMER_INTERVAL STEERING_TIMER_INTERVAL38,853
+#define ACCEL_TIMER_INTERVAL ACCEL_TIMER_INTERVAL39,898
+#define WHEEL_ROTATION_STEP WHEEL_ROTATION_STEP41,941
+#define TACHO_ROTATION_STEP TACHO_ROTATION_STEP43,972
+TxtAreaPainter msg_painter;msg_painter45,1003
+VideoPainter video_painter(&msg_painter);msg_painter46,1031
+VideoPainter gps_painter(&msg_painter, 256, 256);gps_painter47,1073
+BufferQueue buffer_queue;buffer_queue48,1123
+GPSPosQueue position_queue;position_queue49,1149
+SDL_TimerID steering_timer = NULL;steering_timer50,1177
+SDL_TimerID accel_timer = NULL;accel_timer51,1212
+AnimationControllerList steeringWheelAnimations;steeringWheelAnimations52,1244
+AnimationControllerList accelAnimations;accelAnimations53,1293
+AnimationControllerList sonar1Animations;sonar1Animations54,1334
+AnimationControllerList compassAnimations;compassAnimations55,1376
+AnimationCmdMap sensor_animations_map;sensor_animations_map56,1419
+IceApp app(&msg_painter, app57,1458
+SDL_Joystick *joystick = NULL;joystick63,1627
+bool reverse_accel = false;reverse_accel64,1658
+myInitGL(void)myInitGL68,1694
+drawScene(DefaultRenderer *renderer)   // Create The Display FunctiondrawScene95,2366
+resizeWindow(DefaultRenderer *renderer, int w, int h)resizeWindow106,2636
+sendUserEvent()sendUserEvent113,2733
+static short wheel_angle = 0;wheel_angle122,2857
+static short accel_angle = 0;accel_angle123,2887
+static short camera_angle = 50;camera_angle124,2917
+steeringLeft(Uint32 interval, void *param)steeringLeft127,2958
+steeringRight(Uint32 interval, void *param)steeringRight139,3222
+accelMinus(Uint32 interval, void *param)accelMinus151,3489
+accelPlus(Uint32 interval, void *param)accelPlus162,3739
+handleKeyPress(SDL_keysym *keysym, bool *done, SceneGraph *scene_graph)handleKeyPress175,4031
+handleKeyRelease(SDL_keysym *keysym)handleKeyRelease242,5550
+handleJoystickAxisMotion(SDL_JoyAxisEvent *event)handleJoystickAxisMotion273,6026
+executeCommand(AbstractCommand *cmd)executeCommand316,7322
+mainLoop(DefaultRenderer *renderer, mainLoop325,7431
+main(int argc, char** argv)main409,9639
+
+TxtAreaPainter.h,195
+#define __TXTAREAPAINTER_H__TXTAREAPAINTER_H6,122
+class TxtAreaPainterTxtAreaPainter11,185
+  typedef std::list<std::string> StringList;StringList20,302
+  StringList strings;strings21,347
+
+IceApp.cpp,1132
+#define STEERING_MOTOR_ID STEERING_MOTOR_ID18,386
+#define ACCEL_MOTOR_ID ACCEL_MOTOR_ID19,414
+#define CAMERA_MOTOR_ID CAMERA_MOTOR_ID20,442
+static const unsigned int CMD_INTERVAL = 5 * 1000; // 5 millisecondCMD_INTERVAL23,501
+IceUtil::Mutex mutex;mutex25,570
+IceApp::IceApp(TxtAreaPainter *mpainter, IceApp28,594
+IceApp::~IceApp()~IceApp50,1198
+IceApp::printMessage(const std::string &msg)printMessage56,1228
+IceApp::requestShutdown()requestShutdown70,1535
+IceApp::setControlProxies(vehicle::RemoteVehiclePrx unit)setControlProxies91,1934
+IceApp::setSensorList(const vehicleadmin::SensorList &sensor_list)setSensorList99,2065
+IceApp::setActuatorList(const vehicleadmin::ActuatorList &actuator_list)setActuatorList168,4208
+IceApp::startConnectionThread(vehicle::SensorFrameReceiverPrx &video_callback)startConnectionThread189,4860
+IceApp::startMapDownloadThread()startMapDownloadThread201,5287
+IceApp::run(int argc, char *argv[])run211,5526
+IceApp::setSteering(short duty)setSteering340,9183
+IceApp::setAccel(short duty)setAccel367,9738
+IceApp::setRotateCamera(short duty)setRotateCamera396,10303
+
+Queue.h,359
+#define __QUEUE_H__QUEUE_H6,113
+class Queue : public IceUtil::Monitor<IceUtil::Mutex>Queue15,246
+   Queue(IceUtil::Int64 wait_timeout_seconds = 5) Queue18,311
+  void put(const T& item)put22,436
+  T get()get30,606
+  typename std::list<T>::size_type size() const size44,933
+  const IceUtil::Time timeout;timeout51,1092
+  std::list<T> q;q52,1123
+
+GstMainThread.h,498
+#define __GSTMAINTHREAD_H__GSTMAINTHREAD_H6,121
+class GstMainThreadGstMainThread16,248
+  VideoPainter *video_painter;video_painter34,718
+  BufferQueue *buffer_queue;buffer_queue37,760
+  SDL_Thread *thread;thread38,789
+  bool shutdown_requested;shutdown_requested39,811
+  std::string decoding_pipeline;decoding_pipeline40,838
+  int argc;argc41,871
+  char **argv;argv42,883
+  GstPipeline* pipeline;pipeline44,899
+  GstElement *appsrc;appsrc45,924
+  GMainLoop *loop;loop46,946
+
+SensorFrameReceiverI.cpp,185
+SensorFrameReceiverI::SensorFrameReceiverI(BufferQueue *bq,SensorFrameReceiverI12,215
+SensorFrameReceiverI::nextSensorFrame(const vehicle::SensorFrame &frame, nextSensorFrame22,487
+
+ConnectionThread.h,430
+#define __CONNECTIONTHREAD_H__CONNECTIONTHREAD_H6,124
+class ConnectionThread : public IceUtil::ThreadConnectionThread14,220
+  IceApp *app;app27,531
+  bool *shutdown_requested;shutdown_requested28,546
+  const std::string unit_str_proxy;unit_str_proxy29,574
+  vehicle::SensorFrameReceiverPrx sensor_callback;sensor_callback30,610
+typedef IceUtil::Handle<ConnectionThread> ConnectionThreadPtr;ConnectionThreadPtr33,665
+
+AnimationCmd.h,438
+#define __ANIMATIONCMD_H__ANIMATIONCMD_H6,120
+class AnimationCmd : public AbstractCommandAnimationCmd13,225
+  virtual bool shouldDelete() {return false;}shouldDelete20,361
+  void setPercentage(short perc) {this->percentage = perc;}setPercentage21,407
+  AnimationControllerList *anim_ctl_list;anim_ctl_list24,478
+  short percentage;percentage25,520
+typedef std::map<short, AnimationCmd> AnimationCmdMap;AnimationCmdMap29,601
+
+MapDownloadThread.cpp,447
+MapDownloadThread::MapDownloadThread(GPSPosQueue *pos_queue, MapDownloadThread8,119
+MapDownloadThread::~MapDownloadThread()~MapDownloadThread17,338
+PrepareTextureSurface(SDL_Surface *surface)PrepareTextureSurface23,398
+UpdateTexture(const std::string &img_file_name, VideoPainter *gps_painter)UpdateTexture70,1486
+size_t write_data(void *buffer, size_t size, size_t nmemb, void *of)write_data87,2021
+MapDownloadThread::run()run93,2150
+
+toanaglyph.h,43
+#define __TOANAGLYPH_H__TOANAGLYPH_H2,23
+
+PrintStatusMsg.cpp,218
+#define WIN32_LEAN_AND_MEANWIN32_LEAN_AND_MEAN4,70
+printStatusMessage(const std::string &msg, TxtAreaPainter *painter)printStatusMessage12,171
+printStatusMessage1(const std::string &msg)printStatusMessage133,597
+
+PrintStatusMsg.h,52
+#define __PRINTSTATUSMSG_H__PRINTSTATUSMSG_H6,122
+
+ServerThread.h,318
+#define __SERVERTHREAD_H__SERVERTHREAD_H6,120
+class ServerThread : public IceUtil::ThreadServerThread12,205
+  Ice::Application *app;app24,531
+  int argc;argc25,556
+  char **argv;argv26,568
+  Ice::PropertiesPtr props;props27,583
+typedef IceUtil::Handle<ServerThread> ServerThreadPtr;ServerThreadPtr30,615
+
+VideoPainter.h,386
+#define __VIDEOPAINTER_H__VIDEOPAINTER_H6,120
+class VideoPainterVideoPainter14,219
+  TxtAreaPainter *msgpainter;msgpainter32,572
+  size_t framewidth, frameheight;framewidth33,602
+  size_t framewidth, frameheight;frameheight33,602
+  SDL_mutex *mut;mut34,636
+  unsigned char *texdata;texdata35,654
+  bool paint_stereo;paint_stereo36,680
+  GLuint videotex;videotex37,701
+
+AnimationCmd.cpp,114
+AnimationCmd::AnimationCmd(AnimationControllerList *al)AnimationCmd8,123
+AnimationCmd::execute()execute16,232
+
+BufferQueue.cpp,171
+BufferQueue::BufferQueue() : received_buffers(5)BufferQueue8,122
+BufferQueue::store(const comtypes::ByteSeq &chunk)store14,183
+BufferQueue::retrieve()retrieve30,595
+
+AnimationController.cpp,336
+AnimationController::AnimationController(Animation::AnimationList::iterator &anim,AnimationController5,77
+AnimationController::animate(short percentage)animate14,357
+AddAnimationController(AnimationControllerList &list, AddAnimationController27,794
+AnimateList(AnimationControllerList &list, short percentage)AnimateList42,1251
+
+VideoPainter.cpp,363
+VideoPainter::VideoPainter(TxtAreaPainter *painter,VideoPainter12,211
+VideoPainter::~VideoPainter()~VideoPainter27,658
+VideoPainter::setTextureId(GLuint id)setTextureId38,784
+VideoPainter::setStereo(bool is_stereo)setStereo45,857
+VideoPainter::receiveBuffer(unsigned char *data, size_t size)receiveBuffer52,943
+VideoPainter::paint() constpaint90,1937
+
+SensorFrameReceiverI.h,417
+#define __SENSORFRAMERECEIVERI_H__SENSORFRAMERECEIVERI_H6,128
+class SensorFrameReceiverI : public vehicle::SensorFrameReceiverSensorFrameReceiverI16,284
+   BufferQueue *buffer_queue;buffer_queue28,649
+   GPSPosQueue *position_queue;position_queue29,679
+   AnimationCmdMap *anim_cmd_map;anim_cmd_map30,711
+typedef IceUtil::Handle<SensorFrameReceiverI> SensorFrameReceiverIPtr;SensorFrameReceiverIPtr33,749
+
+SetStatusMsgCmd.cpp,140
+SetStatusMsgCmd::SetStatusMsgCmd(TxtAreaPainter *p, const std::string &msg)SetStatusMsgCmd9,154
+SetStatusMsgCmd::execute()execute17,275
+
+AbstractCommand.h,265
+#define __ABSTRACTCOMMAND_H__ABSTRACTCOMMAND_H6,123
+class AbstractCommandAbstractCommand9,153
+  AbstractCommand() {}AbstractCommand12,186
+  virtual ~AbstractCommand() {}~AbstractCommand13,209
+  virtual bool shouldDelete() {return true;}shouldDelete16,251
+
+MapDownloadThread.h,579
+#define __MAPDOWNLOADTHREAD_H__MAPDOWNLOADTHREAD_H6,125
+class MapDownloadThread : public IceUtil::ThreadMapDownloadThread16,310
+  void requestShutdown() {this->shutdown_requested = true;}requestShutdown24,504
+  typedef IceUtil::Mutex SyncT;SyncT27,575
+  bool shutdown_requested;shutdown_requested28,607
+  SyncT map_cache_sync;map_cache_sync29,634
+  GPSPosQueue *position_queue;position_queue30,658
+  VideoPainter *gps_painter;gps_painter31,689
+  CURL *curl;curl32,718
+typedef IceUtil::Handle<MapDownloadThread> MapDownloadThreadPtr;MapDownloadThreadPtr35,736
+
+ConnectionThread.cpp,169
+ConnectionThread::ConnectionThread(IceApp *a, ConnectionThread11,190
+ConnectionThread::~ConnectionThread()~ConnectionThread23,542
+ConnectionThread::run()run29,592
+
+AnimationController.h,367
+#define __ANIMATIONCONTROLLER_H__ANIMATIONCONTROLLER_H2,32
+class AnimationControllerAnimationController9,135
+  Animation::AnimationList::iterator animation;animation19,333
+  SceneGraph *scene_graph;scene_graph20,381
+  float animation_step;animation_step21,408
+typedef std::vector<AnimationController> AnimationControllerList;AnimationControllerList24,436
+
+BufferQueue.h,214
+#define __BUFFERQUEUE_H__BUFFERQUEUE_H6,119
+class BufferQueueBufferQueue13,208
+  typedef Queue<GstBuffer*> AsyncBufferQueue;AsyncBufferQueue23,346
+  AsyncBufferQueue received_buffers;received_buffers24,392
+
+IceApp.h,1331
+#define __ICEAPP_H__ICEAPP_H6,114
+class IceApp : public Ice::ApplicationIceApp20,368
+  short getJoystickAccelAxis() const {return this->joystick_accel_prop;}getJoystickAccelAxis46,1093
+  short getJoystickSteeringAxis() const {return this->joystick_steering_prop;}getJoystickSteeringAxis47,1166
+  short getJoystickReverseButton() const {return this->joystick_reverse_prop;}getJoystickReverseButton48,1245
+  MapDownloadThreadPtr map_download_thread;map_download_thread53,1435
+  IceUtil::ThreadControl mdt_ctl;mdt_ctl54,1479
+  std::string unit_str_proxy;unit_str_proxy57,1565
+  TxtAreaPainter *msg_painter;msg_painter58,1595
+  VideoPainter *video_painter;video_painter59,1626
+  VideoPainter *gps_painter;gps_painter60,1657
+  bool shutdown_requested;shutdown_requested61,1686
+  bool communicator_waiting;communicator_waiting62,1713
+  vehicle::RemoteVehiclePrx unit_prx;unit_prx63,1742
+  BufferQueue *buffer_queue;buffer_queue64,1780
+  GPSPosQueue *position_queue;position_queue65,1809
+  AnimationCmdMap *anim_cmd_map;anim_cmd_map66,1840
+  vehicle::SensorFrameReceiverPrx sensor_callback_prx;sensor_callback_prx67,1873
+  short joystick_accel_prop;joystick_accel_prop68,1928
+  short joystick_steering_prop;joystick_steering_prop69,1957
+  short joystick_reverse_prop;joystick_reverse_prop70,1989
