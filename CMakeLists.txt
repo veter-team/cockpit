@@ -56,19 +56,19 @@ link_directories(${GLIB2_LIBRARIES}
 set(ICE_SLICE2CPP slice2cpp)
 
 add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/admin.cpp ${PROJECT_BINARY_DIR}/admin.h
-                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-interfaces/admin.ice
-                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-interfaces/admin.ice
-                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-interfaces/admin.ice")
+                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-intrefaces/admin.ice
+                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-intrefaces/admin.ice
+                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-intrefaces/admin.ice")
 
 add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/sensors.cpp ${PROJECT_BINARY_DIR}/sensors.h
-                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-interfaces/sensors.ice
-                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-interfaces/sensors.ice
-                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-interfaces/sensors.ice")
+                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-intrefaces/sensors.ice
+                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-intrefaces/sensors.ice
+                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-intrefaces/sensors.ice")
 
 add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/actuators.cpp ${PROJECT_BINARY_DIR}/actuators.h
-                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-interfaces/actuators.ice
-                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-interfaces/actuators.ice
-                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-interfaces/actuators.ice")
+                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-intrefaces/actuators.ice
+                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-intrefaces/actuators.ice
+                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-intrefaces/actuators.ice")
 
 if(NOT WIN32)
   SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " -Wall")
