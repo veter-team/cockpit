@@ -53,20 +53,22 @@ link_directories(${GLIB2_LIBRARIES}
                  ${ICE_LIBRARY_DIR}
                  ${collada-view_BINARY_DIR})
 
-add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/comtypes.cpp ${PROJECT_BINARY_DIR}/comtypes.h
-                   COMMAND ${ICE_HOME}/bin/slice2cpp${CMAKE_PROGRAM_SUFFIX} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-intrefaces/comtypes.ice
-                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-intrefaces/comtypes.ice
-                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-intrefaces/comtypes.ice")
+set(ICE_SLICE2CPP slice2cpp)
 
-add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/vehicleadmin.cpp ${PROJECT_BINARY_DIR}/vehicleadmin.h
-                   COMMAND ${ICE_HOME}/bin/slice2cpp${CMAKE_PROGRAM_SUFFIX} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-intrefaces/vehicleadmin.ice
-                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-intrefaces/vehicleadmin.ice
-                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-intrefaces/vehicleadmin.ice")
+add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/admin.cpp ${PROJECT_BINARY_DIR}/admin.h
+                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-interfaces/admin.ice
+                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-interfaces/admin.ice
+                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-interfaces/admin.ice")
 
-add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/vehicle.cpp ${PROJECT_BINARY_DIR}/vehicle.h
-                   COMMAND ${ICE_HOME}/bin/slice2cpp${CMAKE_PROGRAM_SUFFIX} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-intrefaces/vehicle.ice
-                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-intrefaces/vehicle.ice
-                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-intrefaces/vehicle.ice")
+add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/sensors.cpp ${PROJECT_BINARY_DIR}/sensors.h
+                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-interfaces/sensors.ice
+                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-interfaces/sensors.ice
+                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-interfaces/sensors.ice")
+
+add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/actuators.cpp ${PROJECT_BINARY_DIR}/actuators.h
+                   COMMAND ${ICE_SLICE2CPP} -I${ICE_SLICE_DIR} --output-dir ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/remote-interfaces/actuators.ice
+                   MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/remote-interfaces/actuators.ice
+                   COMMENT "invoking slice2cpp on ${PROJECT_SOURCE_DIR}/remote-interfaces/actuators.ice")
 
 if(NOT WIN32)
   SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} " -Wall")
@@ -74,9 +76,9 @@ endif(NOT WIN32)
 
 
 SET(CPPFILES 
-    ${PROJECT_BINARY_DIR}/comtypes.cpp
-    ${PROJECT_BINARY_DIR}/vehicleadmin.cpp
-    ${PROJECT_BINARY_DIR}/vehicle.cpp
+    ${PROJECT_BINARY_DIR}/admin.cpp
+    ${PROJECT_BINARY_DIR}/sensors.cpp
+    ${PROJECT_BINARY_DIR}/actuators.cpp
     src/AnimationController.cpp
     src/toanaglyph.cpp
     src/TxtAreaPainter.cpp
@@ -85,10 +87,17 @@ SET(CPPFILES
     src/SetStatusMsgCmd.cpp
     src/AnimationCmd.cpp
     src/RouterHelper.cpp
+    src/VideoDecoder.cpp
+    src/KeyboardAdminI.cpp
+    src/KeyboardSensorI.cpp
+    src/ActuatorController.cpp
+    src/JoystickChassisCtl.cpp
+    src/JoystickHeadCtl.cpp
+    src/KeyboardChassisCtl.cpp
+    src/KeyboardHeadCtl.cpp
+    src/SensorFrameReceiverI.cpp
+    src/VisualizationManager.cpp
     src/IceApp.cpp
-    src/ServerThread.cpp
-    src/ConnectionThread.cpp
-    src/GstMainThread.cpp
     src/BufferQueue.cpp
     src/SensorFrameReceiverI.cpp
     src/MapDownloadThread.cpp
@@ -97,18 +106,28 @@ SET(CPPFILES
     src/main.cpp)
 
 SET(HEADERS
+    ${PROJECT_BINARY_DIR}/admin.cpp
+    ${PROJECT_BINARY_DIR}/sensors.cpp
+    ${PROJECT_BINARY_DIR}/actuators.cpp
     src/RangeMap.h
     src/AbstractCommand.h
     src/AnimationController.h
     src/BufferQueue.h
-    src/ConnectionThread.h
-    src/GstMainThread.h
+    src/KeyboardAdminI.h
+    src/KeyboardSensorI.h
+    src/ActuatorController.h
+    src/JoystickChassisCtl.h
+    src/JoystickHeadCtl.h
+    src/KeyboardChassisCtl.h
+    src/KeyboardHeadCtl.h
+    src/SensorFrameReceiverI.h
+    src/VisualizationManager.h
     src/IceApp.h
     src/PrintStatusMsg.h
     src/Queue.h
     src/RouterHelper.h
+    src/VideoDecoder.h
     src/SensorFrameReceiverI.h
-    src/ServerThread.h
     src/SetStatusMsgCmd.h
     src/AnimationCmd.h
     src/toanaglyph.h

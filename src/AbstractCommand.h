@@ -1,7 +1,3 @@
-/* Copyright (c) 2010 Andrey Nechypurenko
-   See the file LICENSE for copying permission. 
-*/
-
 #ifndef __ABSTRACTCOMMAND_H
 #define __ABSTRACTCOMMAND_H
 

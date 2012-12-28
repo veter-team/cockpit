@@ -9,17 +9,19 @@
 #include <map>
 #include <string>
 #include "rect.h"
+#include "MapDownloadThread.h"
+
 
 typedef PointT<int> PointI;
 typedef PointT<float> PointF;
 typedef Rect<int> RectI;
 
-class MapDownloadThread;
 
 class TileManager
 {
 public:
-  TileManager(MapDownloadThread *mdt);
+  TileManager();
+  ~TileManager();
 
 public:
   void invalidate();
@@ -44,7 +46,7 @@ private:
 private:
   float latitude;
   float longitude;
-  MapDownloadThread *map_download_thread;
+  MapDownloadThread map_download_thread;
   PointI m_offset;
   RectI m_tilesRect;
   SDL_Surface *m_emptyTile;

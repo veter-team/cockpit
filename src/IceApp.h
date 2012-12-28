@@ -1,71 +1,45 @@
-/* Copyright (c) 2010 Andrey Nechypurenko
-   See the file LICENSE for copying permission. 
-*/
-
 #ifndef __ICEAPP_H
 #define __ICEAPP_H
 
 #include <Ice/Application.h>
-#include <IceUtil/Monitor.h>
-#include <vehicle.h>
-#include "SensorFrameReceiverI.h"
-#include "AnimationCmd.h"
-
-class TxtAreaPainter;
-class VideoPainter;
-class BufferQueue;
-class TileManager;
-class MapDownloadThread;
+#include "VisualizationManager.h"
+#include "AbstractCommand.h"
+#include "BufferQueue.h"
+#include "VideoDecoder.h"
+#include "ActuatorController.h"
+#include "KeyboardSensorI.h"
 
 
 class IceApp : public Ice::Application
 {
  public:
-  IceApp(TxtAreaPainter *mpainter, 
-         VideoPainter *vpainter, 
-         TileManager *tm,
-         MapDownloadThread *mdt,
-         BufferQueue *bq,
-         AnimationCmdMap *cmd_map);
+  IceApp();
   virtual ~IceApp();
 
  public:
   virtual int run(int argc, char *argv[]);
-  void requestShutdown();
-  void printMessage(const std::string &msg);
+  virtual void interruptCallback(int);
 
-  void setSteering(short duty);
-  void setAccel(short duty);
-  void setRotateCamera(short duty);
-
-  void setControlProxies(vehicle::RemoteVehiclePrx unit);
-  void setSensorList(const vehicleadmin::SensorList &sensor_list);
-  void setActuatorList(const vehicleadmin::ActuatorList &actuator_list);
-
-  const char *getDecodingPipeline();
-
-  short getJoystickAccelAxis() const {return this->joystick_accel_prop;}
-  short getJoystickSteeringAxis() const {return this->joystick_steering_prop;}
-  short getJoystickReverseButton() const {return this->joystick_reverse_prop;}
-  
  private:
-  IceUtil::ThreadControl startConnectionThread(vehicle::SensorFrameReceiverPrx &video_callback);
+  typedef std::pair<sensors::SensorGroupPrx, sensors::SensorDescriptionSeq> sensorinfo_t;
+  sensorinfo_t connectToSensor(const std::string &sensor_name) const;
 
-  TileManager *tile_manager;
-  MapDownloadThread *map_download_thread;
+  typedef std::pair<actuators::ActuatorGroupPrx, actuators::ActuatorDescriptionSeq> actuatorinfo_t;
+  actuatorinfo_t connectToActuator(const std::string &actuator_name) const;
 
-  std::string unit_str_proxy;
-  TxtAreaPainter *msg_painter;
-  VideoPainter *video_painter;
-  bool shutdown_requested;
-  bool communicator_waiting;
-  vehicle::RemoteVehiclePrx unit_prx;
-  BufferQueue *buffer_queue;
-  AnimationCmdMap *anim_cmd_map;
-  vehicle::SensorFrameReceiverPrx sensor_callback_prx;
-  short joystick_accel_prop;
-  short joystick_steering_prop;
-  short joystick_reverse_prop;
+  void mainloop();
+  void requestExit();
+  void executeCommand(AbstractCommand *cmd) const;
+  void handleKeyEvent(SDL_KeyboardEvent *key);
+
+ private:
+  ActuatorCtlMap actuator_map;
+  VideoDecoder video_decoder;
+  BufferQueue buffer_queue;
+  VisualizationManager visuals;
+  bool should_stop;
+  KeyboardSensorIPtr keyboard_sensor;
+  admin::StatePrx chassis_state_prx;
 };
 
 

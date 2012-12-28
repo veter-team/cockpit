@@ -1,18 +1,23 @@
-/* Copyright (c) 2010 Andrey Nechypurenko
-   See the file LICENSE for copying permission. 
-*/
-
 #include "BufferQueue.h"
 
 
-BufferQueue::BufferQueue() : received_buffers(5)
+BufferQueue::BufferQueue() : received_buffers(5), destroying(false)
 {
 }
 
 
-void 
-BufferQueue::store(const comtypes::ByteSeq &chunk)
+BufferQueue::~BufferQueue()
 {
+  this->destroying = true;
+}
+
+
+void 
+BufferQueue::store(const Ice::ByteSeq &chunk)
+{
+  if(this->destroying)
+    return;
+
   GstBuffer *buffer = gst_buffer_new();
 
   GST_BUFFER_SIZE(buffer) = chunk.size();
@@ -34,6 +39,8 @@ BufferQueue::retrieve()
   try
   {
     b = this->received_buffers.get();
+    if(this->destroying)
+      return NULL;
   }
   catch(const std::runtime_error &e)
   {

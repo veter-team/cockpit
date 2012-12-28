@@ -40,6 +40,7 @@ public:
   SDL_Thread* start();
   virtual int run() = 0;
   virtual int requestShutdownAndWait();
+  bool isStarted() const {return (this->thread != NULL);}
 
 protected:
   SDL_Thread *thread;

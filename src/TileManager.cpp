@@ -42,15 +42,17 @@ float latitudeFromTile(float ty, int zoom)
 }
 
 
-TileManager::TileManager(MapDownloadThread *mdt)
+TileManager::TileManager()
 : width(0), 
   height(0), 
   zoom(16), 
   texture_id(0),
-  latitude(48.005f), longitude(11.33f), // Starnberg
-  //latitude(52.52958999943302f), longitude(13.383053541183472f), // Berlin
-  map_download_thread(mdt)
+  latitude(49.963734f), longitude(36.326475f) // Home
+  //latitude(48.005f), longitude(11.33f) // Starnberg
+  //latitude(52.52958999943302f), longitude(13.383053541183472f) // Berlin
 {
+  this->map_download_thread.setMapObject(this);
+
   m_emptyTile = SDL_CreateRGBSurface(SDL_SWSURFACE,
                                      tdim, tdim,
                                      32,
@@ -66,6 +68,13 @@ TileManager::TileManager(MapDownloadThread *mdt)
                                      0x000000FF
 #endif
                                      );
+}
+
+
+TileManager::~TileManager()
+{
+  if(this->map_download_thread.isStarted())
+    this->map_download_thread.requestShutdownAndWait();
 }
 
 
@@ -110,7 +119,7 @@ TileManager::updateTexture(const RectI &target_rect, SDL_Surface *src)
   SDL_Surface *image;
   SDL_Rect area;
   Uint32 saved_flags;
-  Uint8  saved_alpha;
+  //Uint8  saved_alpha;
 
   RectI ir = RectI(0, 0, this->width, this->height).intersect(target_rect);
 
@@ -136,7 +145,7 @@ TileManager::updateTexture(const RectI &target_rect, SDL_Surface *src)
 
   /* Save the alpha blending attributes */
   saved_flags = src->flags & (SDL_SRCALPHA | SDL_RLEACCELOK);
-  saved_alpha = src->format->alpha;
+  //saved_alpha = src->format->alpha;
   if((saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA)
     SDL_SetAlpha(src, 0, SDL_ALPHA_TRANSPARENT);
 
@@ -226,6 +235,8 @@ TileManager::setCenter(float lat, float longit)
 {
   this->latitude = lat;
   this->longitude = longit;
+  if(!this->map_download_thread.isStarted())
+    this->map_download_thread.start();
   this->invalidate();
 }
 
@@ -251,7 +262,7 @@ TileManager::download()
       return;
     }
 
-  this->map_download_thread->addDownloadRequest(zoom, grab.x(), grab.y());
+  this->map_download_thread.addDownloadRequest(zoom, grab.x(), grab.y());
 }
 
 

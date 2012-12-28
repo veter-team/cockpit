@@ -1,208 +1,56 @@
-/* Copyright (c) 2010 Andrey Nechypurenko
-   See the file LICENSE for copying permission. 
-*/
-
 #include "IceApp.h"
-#include "RouterHelper.h"
-#include "TxtAreaPainter.h"
-#include "VideoPainter.h"
-#include "SetStatusMsgCmd.h"
-#include "ConnectionThread.h"
-#include "GstMainThread.h"
-#include "MapDownloadThread.h"
-#include "TileManager.h"
-#include <vehicle.h>
-#include <SDL.h>
-#include <IceUtil/Mutex.h>
-#include <unistd.h>
 #include <sstream>
+#include "RouterHelper.h"
+#include "SensorFrameReceiverI.h"
+#include "KeyboardAdminI.h"
+#include "JoystickChassisCtl.h"
+#include "JoystickHeadCtl.h"
+#include "KeyboardChassisCtl.h"
+#include "KeyboardHeadCtl.h"
 
-#define STEERING_MOTOR_ID 0
-#define ACCEL_MOTOR_ID    1
-#define CAMERA_MOTOR_ID   2
-
-// Sleep time in microseconds
-static const unsigned int CMD_INTERVAL = 5 * 1000; // 5 millisecond
-
-IceUtil::Mutex mutex;
+using namespace std;
 
 
-IceApp::IceApp(TxtAreaPainter *mpainter, 
-               VideoPainter *vpainter, 
-               TileManager *tm,
-               MapDownloadThread *mdt,
-               BufferQueue *bq,
-               AnimationCmdMap *cmd_map)
-  : tile_manager(tm),
-    map_download_thread(mdt),
-    msg_painter(mpainter),
-    video_painter(vpainter),
-    shutdown_requested(false),
-    communicator_waiting(false),
-    unit_prx(0),
-    buffer_queue(bq),
-    anim_cmd_map(cmd_map),
-    joystick_accel_prop(1), // defaults for Logitech Formula Force RX
-    joystick_steering_prop(0),
-    joystick_reverse_prop(7)
+IceApp::IceApp()
+  : should_stop(false)
 {
-  this->map_download_thread->setMapObject(this->tile_manager);
+  this->callbackOnInterrupt();
 }
 
 
 IceApp::~IceApp()
 {
+  // Be nice and stop chassis motors on exit
+  if(this->chassis_state_prx)
+      this->chassis_state_prx->stop();
 }
 
 
 void 
-IceApp::printMessage(const std::string &msg)
+IceApp::interruptCallback(int i)
 {
-  SetStatusMsgCmd *cmd = new SetStatusMsgCmd(this->msg_painter, msg);
-  SDL_Event event;
-  event.type = SDL_USEREVENT;
-  event.user.code = 1;
-  event.user.data1 = cmd;
-  event.user.data2 = 0;
-  SDL_PushEvent(&event);  
-  printf("%s\n", msg.c_str());
+
+  Ice::Application::interruptCallback(i);
 }
 
 
 void 
-IceApp::requestShutdown()
+IceApp::requestExit()
 {
-  this->shutdown_requested = true;
-
-  if(this->communicator_waiting)
-  {
-    // try to behave nice by shutdown
-    this->unit_prx->cleanSensorReceiver();
-    this->communicator()->shutdown();
-  }
-
-  printf("Waiting for map download thread to shutdown\n");
-  this->map_download_thread->requestShutdownAndWait();
-}
-
-
-void 
-IceApp::setControlProxies(vehicle::RemoteVehiclePrx unit)
-{
-  IceUtil::Mutex::Lock lock(mutex);
-  this->unit_prx = unit;
-}
-
-
-void 
-IceApp::setSensorList(const vehicleadmin::SensorList &sensor_list)
-{
-  std::string statusmsg = "Available sensors:";
-  this->printMessage(statusmsg);
-  for(vehicleadmin::SensorList::const_iterator s = sensor_list.begin();
-      s != sensor_list.end(); ++s)
-    {
-      vehicleadmin::SensorPrx sensor = *s;
-      vehicleadmin::SensorDescription descr = 
-        sensor->getDescription();
-      switch(descr.type)
-        {
-        case vehicleadmin::Camera:
-          statusmsg = "Camera: ";
-          this->video_painter->setStereo(false);
-          break;
-        case vehicleadmin::StereoCamera:
-          statusmsg = "Stereo camera: ";
-          this->video_painter->setStereo(true);
-          break;
-        case vehicleadmin::Compass:
-          statusmsg = "Compass: ";
-          break;
-        case vehicleadmin::AccelerometerX:
-          statusmsg = "Accelerometer X: ";
-          break;
-        case vehicleadmin::AccelerometerY:
-          statusmsg = "Accelerometer Y: ";
-          break;
-        case vehicleadmin::AccelerometerZ:
-          statusmsg = "Accelerometer Z: ";
-          break;
-        case vehicleadmin::GyroX:
-          statusmsg = "Gyro X: ";
-          break;
-        case vehicleadmin::GyroY:
-          statusmsg = "Gyro Y: ";
-          break;
-        case vehicleadmin::GyroZ:
-          statusmsg = "Gyro Z: ";
-          break;
-        case vehicleadmin::GPS:
-          this->map_download_thread->start();
-          statusmsg = "GPS: ";
-          break;
-        case vehicleadmin::Range:
-          statusmsg = "Range: ";
-          break;
-        case vehicleadmin::Temperature:
-          statusmsg = "Temperature: ";
-          break;
-        case vehicleadmin::Pressure:
-          statusmsg = "Pressure: ";
-          break;
-        case vehicleadmin::Unknown:
-        default:
-          statusmsg = "Unknown type: ";
-          break;
-        }
-      statusmsg += descr.description + " (" + descr.vendorid + ")";
-      this->printMessage(statusmsg);
-      vehicleadmin::AdminPrx admin = sensor->getAdminInterface();
-      admin->start();
-    }
-}
-
-
-void 
-IceApp::setActuatorList(const vehicleadmin::ActuatorList &actuator_list)
-{
-  std::string statusmsg = "Available actuators:";
-  this->printMessage(statusmsg);
-  for(vehicleadmin::ActuatorList::const_iterator a = actuator_list.begin();
-      a != actuator_list.end(); ++a)
-    {
-      vehicleadmin::ActuatorPrx actuator = *a;
-      vehicleadmin::ActuatorDescription descr = 
-        actuator->getDescription();
-
-      statusmsg = descr.description + "(" + descr.type + ")";
-      this->printMessage(statusmsg);
-                  
-      vehicleadmin::AdminPrx admin = actuator->getAdminInterface();
-      admin->start();
-    }
-}
-
-
-IceUtil::ThreadControl 
-IceApp::startConnectionThread(vehicle::SensorFrameReceiverPrx &video_callback)
-{
-  ConnectionThreadPtr t = new ConnectionThread(this, 
-                                               &(this->shutdown_requested),
-                                               this->unit_str_proxy,
-                                               video_callback);
-  IceUtil::ThreadControl tc = t->start();
-  return tc;
+  this->should_stop = true;
+  this->video_decoder.requestShutdown();
 }
 
 
 int 
 IceApp::run(int argc, char *argv[])
 {
-  std::string statusmsg;
   RouterHelperPtr rh;
   Glacier2::RouterPrx defaultRouter;
-  Ice::PropertiesPtr properties = this->communicator()->getProperties();
+  Ice::PropertiesPtr props = this->communicator()->getProperties();
+  Ice::LoggerPtr log = this->communicator()->getLogger();
 
+  // Try to create router with firewall support using Glacier service
   try
     {
       rh = new RouterHelper(this->communicator());
@@ -210,200 +58,425 @@ IceApp::run(int argc, char *argv[])
     }
   catch(const Ice::Exception& ex)
     {
-      std::ostringstream os;
+      ostringstream os;
       ex.ice_print(os);
-      this->printMessage(os.str());
+      log->warning(os.str());
     }
 
+  // Create object adapter for sensor callback and keyboard sensor servants
   Ice::ObjectAdapterPtr adapter;
-  try
-    {
-      this->printMessage("Creating object adapter");
-      if(defaultRouter)
-        adapter = communicator()->createObjectAdapterWithRouter("Driver", 
-                                                                defaultRouter);
-      else
-        adapter = communicator()->createObjectAdapter("Driver");
+  if(defaultRouter)
+    adapter = communicator()->createObjectAdapterWithRouter("Cockpit", 
+							    defaultRouter);
+  else
+    adapter = communicator()->createObjectAdapter("Cockpit");
 
-      const char *proxyProperty = "Unit.Proxy";
-      this->unit_str_proxy = properties->getProperty(proxyProperty);
-      if(this->unit_str_proxy.empty())
-        {
-          statusmsg = "property `";
-          statusmsg += proxyProperty;
-          statusmsg += "' not set";
-          this->printMessage(statusmsg);
-          return EXIT_FAILURE;
-        }
-
-      std::string p = properties->getProperty("Joystick.accel");
-      if(!p.empty())
-        {
-          std::istringstream is(p);
-          is >> this->joystick_accel_prop;
-        }
-      p = properties->getProperty("Joystick.steering");
-      if(!p.empty())
-        {
-          std::istringstream is(p);
-          is >> this->joystick_steering_prop;
-        }
-      p = properties->getProperty("Joystick.reverse");
-      if(!p.empty())
-        {
-          std::istringstream is(p);
-          is >> this->joystick_reverse_prop;
-        }
-        
-    }
-  catch(const Ice::Exception& ex)
+  if(this->visuals.init(log, props))
     {
-      std::ostringstream os;
-      ex.ice_print(os);
-      this->printMessage(os.str());
+      log->error("Visuals initialization failed");
+      return EXIT_FAILURE;
     }
 
-  SensorFrameReceiverIPtr sensor_callback = 
-    new SensorFrameReceiverI(this->buffer_queue, 
-                             this->tile_manager,
-                             this->anim_cmd_map);
-  Ice::ObjectPrx objprx = 
-    adapter->add(sensor_callback, rh->makeId("sensorcallback"));
-  if(objprx == 0)
-  {
-      fprintf(stderr, "Can not add sensorcallback to the object adapter\n");
-      return EXIT_FAILURE;
-  }
-  this->sensor_callback_prx = 
-    vehicle::SensorFrameReceiverPrx::uncheckedCast(objprx); 
-  if(this->sensor_callback_prx == 0)
-  {
-      fprintf(stderr, "Can not create videocallback object\n");
-      return EXIT_FAILURE;
-  }
+  Ice::ObjectPrx objprx;
+
+  // Initialize keyboard sensor (and admin) servants
+  KeyboardAdminIPtr keyboard_admin = new KeyboardAdminI();
+  objprx = adapter->add(keyboard_admin, 
+			this->communicator()->stringToIdentity("keyboard-sensor-admin"));
+  admin::StatePrx keyboard_admin_prx = 
+    admin::StatePrx::uncheckedCast(objprx); 
+
+  this->keyboard_sensor = new KeyboardSensorI(keyboard_admin_prx);
+  keyboard_admin->setSensorGroup(this->keyboard_sensor);
+  objprx = 
+    adapter->add(this->keyboard_sensor, 
+		 this->communicator()->stringToIdentity("keyboard-sensor"));
 
   adapter->activate();
 
-  IceUtil::ThreadControl tc = 
-    this->startConnectionThread(this->sensor_callback_prx);
-  tc.join();
+  admin::StatePrx state_prx;
 
-  GstMainThread *gst = NULL;
+  // Initialize actuators list
 
-  const char *pipelineProperty = "Decoding.Pipeline";
-  std::string decoding_pipeline = properties->getProperty(pipelineProperty);
-  if(decoding_pipeline.empty())
+  // Our chassis has two motors
+  actuatorinfo_t cactinfo = this->connectToActuator("Chassis");
+  actuators::ActuatorGroupPrx cactuator_prx = cactinfo.first;
+  //actuators::ActuatorDescriptionSeq cactdescr = actinfo.second;
+
+  // Servo motor to rotate the head with cameras and front sonar
+  actuatorinfo_t hactinfo = this->connectToActuator("Head");
+  actuators::ActuatorGroupPrx hactuator_prx = hactinfo.first;
+  //actuators::ActuatorDescriptionSeq hactdescr = actinfo.second;
+
+  // Initialize joystick callback servant
+  sensorinfo_t info = this->connectToSensor("Joystick");
+  sensors::SensorGroupPrx sensor_prx = info.first;
+  sensors::SensorDescriptionSeq descr = info.second;
+  ActuatorControllerPtr joy_chassis_ctl;
+  ActuatorControllerPtr joy_head_ctl;
+  if(sensor_prx && !descr.empty())
     {
-      statusmsg = "property `";
-      statusmsg += pipelineProperty;
-      statusmsg += "' not set. Video would not be available.";
-      this->printMessage(statusmsg);
+      actctlkey_t key = std::make_pair(descr[0].id, descr[0].type);
+      if(cactuator_prx)
+	{
+	  joy_chassis_ctl.reset(new JoystickChassisCtl(cactuator_prx));
+	  this->actuator_map.insert(std::make_pair(key, 
+						   joy_chassis_ctl.get()));
+	  this->chassis_state_prx = cactuator_prx->getStateInterface();
+	  this->chassis_state_prx->start();
+	}
+      if(hactuator_prx)
+	{
+	  joy_head_ctl.reset(new JoystickHeadCtl(hactuator_prx));
+	  this->actuator_map.insert(std::make_pair(key, 
+						   joy_head_ctl.get()));
+	  state_prx = hactuator_prx->getStateInterface();
+	  state_prx->start();
+	}
+      SensorFrameReceiverIPtr joystick_callback = 
+	new SensorFrameReceiverI(descr[0].type,
+				 descr[0].minvalue,
+				 descr[0].maxvalue,
+				 &this->buffer_queue, 
+				 &this->visuals.tile_manager,
+				 &this->visuals.sensor_animations_map,
+				 &this->actuator_map);
+      objprx = 
+	adapter->add(joystick_callback, rh->makeId("joystickcallback"));
+      sensors::SensorFrameReceiverPrx joystick_callback_prx = 
+	sensors::SensorFrameReceiverPrx::uncheckedCast(objprx); 
+      sensor_prx->setSensorReceiver(joystick_callback_prx);
+      state_prx = sensor_prx->getStateInterface();
+      state_prx->start();
     }
-  else
-    gst = GstMainThread::create(argc, argv, 
-                                decoding_pipeline.c_str(),
-                                this->video_painter,
-                                this->buffer_queue);
 
-  if(!this->communicator_waiting && !this->shutdown_requested)
+  // Initialize keyboard callback servant
+  info = this->connectToSensor("Keyboard");
+  sensor_prx = info.first;
+  descr = info.second;
+  ActuatorControllerPtr kbd_chassis_ctl;
+  ActuatorControllerPtr kbd_head_ctl;
+  if(sensor_prx && !descr.empty())
     {
-      this->communicator_waiting = true;
-      this->printMessage("Ready to process requests.");
-      this->communicator()->waitForShutdown();
-      this->communicator_waiting = false;
+      actctlkey_t key = std::make_pair(descr[0].id, descr[0].type);
+      if(cactuator_prx)
+	{
+	  kbd_chassis_ctl.reset(new KeyboardChassisCtl(cactuator_prx));
+	  this->actuator_map.insert(std::make_pair(key, 
+						   kbd_chassis_ctl.get()));
+	  state_prx = cactuator_prx->getStateInterface();
+	  state_prx->start();
+	}
+      if(hactuator_prx)
+	{
+	  kbd_head_ctl.reset(new KeyboardHeadCtl(hactuator_prx));
+	  this->actuator_map.insert(std::make_pair(key, 
+						   kbd_head_ctl.get()));
+	  state_prx = hactuator_prx->getStateInterface();
+	  state_prx->start();
+	}
+
+      SensorFrameReceiverIPtr kbd_callback = 
+	new SensorFrameReceiverI(descr[0].type,
+				 descr[0].minvalue,
+				 descr[0].maxvalue,
+				 &this->buffer_queue, 
+				 &this->visuals.tile_manager,
+				 &this->visuals.sensor_animations_map,
+				 &this->actuator_map);
+      objprx = 
+	adapter->add(kbd_callback, 
+		     this->communicator()->stringToIdentity("kbdcallback"));
+      sensors::SensorFrameReceiverPrx kbd_callback_prx = 
+	sensors::SensorFrameReceiverPrx::uncheckedCast(objprx); 
+      sensor_prx->setSensorReceiver(kbd_callback_prx);
+      state_prx = sensor_prx->getStateInterface();
+      state_prx->start();
     }
 
-  if(gst)
+  // Initialize sonars callback servant
+  info = this->connectToSensor("Sonars");
+  sensor_prx = info.first;
+  descr = info.second;
+  if(sensor_prx && !descr.empty())
     {
-      gst->requestShutdown();
-      printf("Waiting for gstreamer thread to shutdown\n");
-      gst->join();
-      delete gst;
+      SensorFrameReceiverIPtr sonars_callback = 
+	new SensorFrameReceiverI(descr[0].type,
+				 descr[0].minvalue,
+				 descr[0].maxvalue,
+				 &this->buffer_queue, 
+				 &this->visuals.tile_manager,
+				 &this->visuals.sensor_animations_map,
+				 NULL);
+      objprx = 
+	adapter->add(sonars_callback, rh->makeId("sonarscallback"));
+      sensors::SensorFrameReceiverPrx sonars_callback_prx = 
+	sensors::SensorFrameReceiverPrx::uncheckedCast(objprx); 
+      sensor_prx->setSensorReceiver(sonars_callback_prx);
+      admin::StatePrx state_prx = sensor_prx->getStateInterface();
+      state_prx->start();
     }
+
+  // Initialize compass callback servant
+  info = this->connectToSensor("Compass");
+  sensor_prx = info.first;
+  descr = info.second;
+  if(sensor_prx && !descr.empty())
+    {
+      SensorFrameReceiverIPtr compass_callback = 
+	new SensorFrameReceiverI(descr[0].type,
+				 descr[0].minvalue,
+				 descr[0].maxvalue,
+				 &this->buffer_queue, 
+				 &this->visuals.tile_manager,
+				 &this->visuals.sensor_animations_map,
+				 NULL);
+      objprx = 
+	adapter->add(compass_callback, rh->makeId("compasscallback"));
+      sensors::SensorFrameReceiverPrx compass_callback_prx = 
+	sensors::SensorFrameReceiverPrx::uncheckedCast(objprx); 
+      sensor_prx->setSensorReceiver(compass_callback_prx);
+      admin::StatePrx state_prx = sensor_prx->getStateInterface();
+      state_prx->start();
+    }
+
+  // Initialize camera callback servant
+  info = this->connectToSensor("Camera");
+  sensor_prx = info.first;
+  descr = info.second;
+  if(sensor_prx && !descr.empty())
+    {
+      const std::string prop_name = "Decoding.Pipeline";
+      std::string dec_pipeline = props->getProperty(prop_name);
+      if(dec_pipeline.empty())
+	{
+	  log->warning(prop_name + " property not set. No video.");
+	}
+      else
+	{
+	  this->video_decoder.initAndStart(argc, argv, 
+					   dec_pipeline.c_str(),
+					   &this->visuals.video_painter,
+					   &this->buffer_queue);
+				       
+	  SensorFrameReceiverIPtr camera_callback = 
+	    new SensorFrameReceiverI(descr[0].type,
+				     descr[0].minvalue,
+				     descr[0].maxvalue,
+				     &this->buffer_queue, 
+				     &this->visuals.tile_manager,
+				     &this->visuals.sensor_animations_map,
+				     NULL);
+	  objprx = 
+	    adapter->add(camera_callback, rh->makeId("cameracallback"));
+	  sensors::SensorFrameReceiverPrx camera_callback_prx = 
+	    sensors::SensorFrameReceiverPrx::uncheckedCast(objprx); 
+	  sensor_prx->setSensorReceiver(camera_callback_prx);
+	  state_prx = sensor_prx->getStateInterface();
+	  state_prx->start();
+	}
+    }
+  
+  this->mainloop();
+
+  // Be nice and stop chassis motors on exit
+  if(this->chassis_state_prx)
+    {
+      this->chassis_state_prx->stop();
+      this->chassis_state_prx = 0;
+    }
+
   return EXIT_SUCCESS;
 }
 
+// TODO: mrege connectToSensor() and connectToActuator() in one
+// template function.
 
-void 
-IceApp::setSteering(short duty)
+IceApp::sensorinfo_t 
+IceApp::connectToSensor(const std::string &sensor_name) const
 {
-  if(!this->unit_prx)
-    return;
+  Ice::PropertiesPtr props = this->communicator()->getProperties();
+  Ice::LoggerPtr log = this->communicator()->getLogger();
 
-  //printf("Steering duty: %i\n", duty);
-
-  vehicle::ActuatorData d = {STEERING_MOTOR_ID, duty};
-  vehicle::ActuatorFrame duties;
-  duties.push_back(d);
   try
     {
-      this->unit_prx->setActuators(duties);
-      //usleep(CMD_INTERVAL);
+      log->print(string("Connecting to ") + sensor_name + " sensor");
+      const string prop_name = sensor_name + ".proxy";
+      string sensor_str_proxy = props->getProperty(prop_name);
+      sensors::SensorGroupPrx sensor_prx;
+      if(sensor_str_proxy.empty())
+	log->warning(prop_name 
+		     + string(" property is not set. No ")
+		     + sensor_name + ".");
+      else
+	{
+	  Ice::ObjectPrx objprx = 
+	    this->communicator()->stringToProxy(sensor_str_proxy);
+	  sensor_prx = sensors::SensorGroupPrx::checkedCast(objprx);
+	  if(!sensor_prx)
+	    log->warning(string("Can not connect to ")
+			 + sensor_name 
+			 + string(" sensor. No ")
+			 + sensor_name + ".");
+	  else
+	    {
+	      string msg = "Connected to sensor group ";
+	      log->print(msg + sensor_name);
+	      sensors::SensorDescriptionSeq descr = 
+		sensor_prx->getSensorDescription();
+	      for(sensors::SensorDescriptionSeq::const_iterator d = descr.begin();
+		  d != descr.end(); ++d)
+		{
+		  ostringstream os;
+		  os << "  Vendor id: " << d->vendorid << endl;
+		  os << "  Description: " << d->description << endl;
+		  os << "  Id: " << d->id << endl;
+		  os << "  Min value: " << d->minvalue << endl;
+		  os << "  Max value: " << d->maxvalue << endl;
+		  os << "  Recommended refresh rate, Hz: " << d->refreshrate;
+		  log->print(os.str());
+		}
+	      return make_pair(sensor_prx, descr);
+	    }
+	}
     }
   catch(const Ice::Exception& ex)
     {
-      this->setControlProxies(0);
-      std::ostringstream os;
+      ostringstream os;
+      os << "Can not connect to " << sensor_name << " sensor. No "
+	 << sensor_name + ".\n";
       ex.ice_print(os);
-      this->printMessage(os.str());
-      this->startConnectionThread(this->sensor_callback_prx);
+      log->warning(os.str());
     }
+
+  return make_pair(sensors::SensorGroupPrx(), 
+		   sensors::SensorDescriptionSeq());
+}
+
+
+IceApp::actuatorinfo_t 
+IceApp::connectToActuator(const std::string &actuator_name) const
+{
+  Ice::PropertiesPtr props = this->communicator()->getProperties();
+  Ice::LoggerPtr log = this->communicator()->getLogger();
+
+  try
+    {
+      log->print(string("Connecting to ") + actuator_name + " actuators");
+      const string prop_name = actuator_name + ".proxy";
+      string actuator_str_proxy = props->getProperty(prop_name);
+      actuators::ActuatorGroupPrx actuator_prx;
+      if(actuator_str_proxy.empty())
+	log->warning(prop_name 
+		     + string(" property is not set. No ")
+		     + actuator_name + ".");
+      else
+	{
+	  Ice::ObjectPrx objprx = 
+	    this->communicator()->stringToProxy(actuator_str_proxy);
+	  actuator_prx = 
+	    actuators::ActuatorGroupPrx::checkedCast(objprx);
+	  if(!actuator_prx)
+	    log->warning(string("Can not connect to ")
+			 + actuator_name 
+			 + string(" actuator. No ")
+			 + actuator_name + ".");
+	  else
+	    {
+	      string msg = "Connected to actuator group ";
+	      log->print(msg + actuator_name);
+	      actuators::ActuatorDescriptionSeq descr = 
+		actuator_prx->getActuatorDescription();
+	      for(actuators::ActuatorDescriptionSeq::const_iterator d = descr.begin();
+		  d != descr.end(); ++d)
+		{
+		  ostringstream os;
+		  os << "  Vendor id: " << d->vendorid << endl;
+		  os << "  Description: " << d->description << endl;
+		  os << "  Id: " << d->id << endl;
+		  log->print(os.str());
+		}
+	      return make_pair(actuator_prx, descr);
+	    }
+	}
+    }
+  catch(const Ice::Exception &ex)
+    {
+      std::ostringstream os;
+      os << "Can not connect to actuator " + actuator_name + ".\n";
+      ex.ice_print(os);
+      log->warning(os.str());
+    }
+
+  return make_pair(actuators::ActuatorGroupPrx(), 
+		   actuators::ActuatorDescriptionSeq());
 }
 
 
 void 
-IceApp::setAccel(short duty)
+IceApp::mainloop()
 {
-  if(!this->unit_prx)
-    return;
+  // used to collect events
+  SDL_Event event;
 
-  vehicle::ActuatorData d = {ACCEL_MOTOR_ID, duty};
-  vehicle::ActuatorFrame duties;
-  duties.push_back(d);
-  try
+  this->visuals.drawScene();
+
+  // wait for events
+  while(!this->should_stop)
     {
-      this->unit_prx->setActuators(duties);
-#ifdef WIN32
-      Sleep(CMD_INTERVAL / 1000);
-#else
-      usleep(CMD_INTERVAL);
-#endif
+      // handle the events in the queue 
+      while(SDL_WaitEvent(&event))
+        {
+          switch(event.type)
+            {
+            case SDL_VIDEORESIZE:
+              // handle resize event 
+              this->visuals.resizeWindow(event.resize.w, event.resize.h);
+              break;
+
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
+              // handle key press and release
+              this->handleKeyEvent(&event.key);
+              break;
+
+            case SDL_USEREVENT:
+              if(event.user.code && event.user.data1)
+                this->executeCommand((AbstractCommand*)event.user.data1);
+              break;
+
+            case SDL_QUIT:
+              /* handle quit requests */
+              this->requestExit();
+              break;
+
+            default:
+              this->visuals.drawScene();
+	    }
+
+          if(!this->should_stop)
+            this->visuals.drawScene();
+          else
+            break;
+        }
     }
-  catch(const Ice::Exception& ex)
-    {
-      this->setControlProxies(0);
-      std::ostringstream os;
-      ex.ice_print(os);
-      this->printMessage(os.str());
-      this->startConnectionThread(this->sensor_callback_prx);
-    }
+
+  // clean ourselves up and exit
+  SDL_Quit();
 }
 
 
 void 
-IceApp::setRotateCamera(short duty)
+IceApp::executeCommand(AbstractCommand *cmd) const
 {
-  if(!this->unit_prx)
-    return;
+  cmd->execute();
+  if(cmd->shouldDelete())
+    delete cmd;
+}
 
-  vehicle::ActuatorData d = {CAMERA_MOTOR_ID, duty};
-  vehicle::ActuatorFrame duties;
-  duties.push_back(d);
-  try
-    {
-      this->unit_prx->setActuators(duties);
-#ifdef WIN32
-      Sleep(CMD_INTERVAL / 1000);
-#else
-      usleep(CMD_INTERVAL);
-#endif
-    }
-  catch(const Ice::Exception& ex)
-    {
-      this->setControlProxies(0);
-      std::ostringstream os;
-      ex.ice_print(os);
-      this->printMessage(os.str());
-      this->startConnectionThread(this->sensor_callback_prx);
-    }
+
+void 
+IceApp::handleKeyEvent(SDL_KeyboardEvent *key)
+{
+  this->keyboard_sensor->handleKeyEvent(key);
 }
