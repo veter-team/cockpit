@@ -1,4 +1,5 @@
 #!/bin/sh
 
-./cockpit --Ice.Config=misc/cockpit.config
+#optirun ../../build/cockpit/cockpit --Ice.Config=cockpit.config
+../../build/cockpit/cockpit --Ice.Config=cockpit.config
 

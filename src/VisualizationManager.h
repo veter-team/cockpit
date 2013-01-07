@@ -38,7 +38,7 @@ class VisualizationManager
   VideoPainter gps_painter;
   AnimationControllerList steeringWheelAnimations;
   AnimationControllerList accelAnimations;
-  AnimationControllerList sonar1Animations;
+  std::vector<AnimationControllerList> sonarAnimations;
   AnimationControllerList compassAnimations;
   Ice::LoggerPtr logger;
   Scene scene;

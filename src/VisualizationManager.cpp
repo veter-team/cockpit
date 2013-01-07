@@ -218,21 +218,35 @@ VisualizationManager::init(Ice::LoggerPtr &log, Ice::PropertiesPtr props)
 	  sensor_animations_map.insert(std::make_pair(id, AnimationCmd(&compassAnimations)));
 	}
 
-      anim_ids = props->getPropertyAsList("UI.Animations.Sonar1");
-      if(anim_ids.empty())
-        {
-          this->logger->print("Property UI.Animations.Sonar1 is not specified.");
-          this->logger->print("There will be no animation for sonar1 data.");
-        }
-      for(Ice::StringSeq::const_iterator aid = anim_ids.begin();
-	  aid != anim_ids.end(); ++aid)
-        {
-          AddAnimationController(sonar1Animations, *aid, scene.getSceneGraph());
-        }
-      if(!sonar1Animations.empty())
+      int sonar_ids[] = {0xE0, 0xE2, 0xE4, 0xE6};
+      sonarAnimations.resize(sizeof(sonar_ids) / sizeof(sonar_ids[0]));
+      char sonar_prop_name[32];
+      for(size_t i = 0; i < sizeof(sonar_ids) / sizeof(sonar_ids[0]); ++i)
 	{
-	  sensorid_t id(0xE0, sensors::Range, 0);
-	  sensor_animations_map.insert(std::make_pair(id, AnimationCmd(&sonar1Animations)));
+	  sprintf(sonar_prop_name, "UI.Animations.Sonar%0X", sonar_ids[i]);
+	  anim_ids = props->getPropertyAsList(sonar_prop_name);
+	  if(anim_ids.empty())
+	    {
+	      std::string msg;
+	      msg = "Property ";
+	      msg += sonar_prop_name;
+	      msg += " is not specified.";
+	      this->logger->print(msg);
+	      this->logger->print("There will be no animation for this sonar data.");
+	      continue;
+	    }
+	  for(Ice::StringSeq::const_iterator aid = anim_ids.begin();
+	      aid != anim_ids.end(); ++aid)
+	    {
+	      AddAnimationController(sonarAnimations[i], 
+				     *aid, 
+				     scene.getSceneGraph());
+	    }
+	  if(!sonarAnimations[i].empty())
+	    {
+	      sensorid_t id(sonar_ids[i], sensors::Range, 0);
+	      sensor_animations_map.insert(std::make_pair(id, AnimationCmd(&sonarAnimations[i])));
+	    }
 	}
 
       str_prop = props->getProperty("UI.VideoImageId");
