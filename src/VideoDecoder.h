@@ -3,8 +3,8 @@
 
 #include <gst/gst.h>
 #include <string>
+#include "VideoPainter.h"
 
-class VideoPainter;
 class BufferQueue;
 
 
@@ -16,13 +16,13 @@ class VideoDecoder
 
   int initAndStart(int argc, char **argv, 
 		   const char *dec_pipeline,
-		   VideoPainter *video_painter, 
+		   const VideoPainterList &vps, 
 		   BufferQueue *buffer_queue);
 
  public:
   void requestShutdown();
 
-  VideoPainter *video_painter;
+  VideoPainterList video_painters;
   BufferQueue *buffer_queue;
   GstPipeline *pipeline;
 

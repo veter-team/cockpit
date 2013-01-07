@@ -1,5 +1,4 @@
 #include "VideoDecoder.h"
-#include "VideoPainter.h"
 #include "BufferQueue.h"
 #include <SDL.h>
 
@@ -9,8 +8,7 @@ GST_DEBUG_CATEGORY (cockpit_video_debug);
 
 
 VideoDecoder::VideoDecoder()
-  : video_painter(NULL), 
-    buffer_queue(NULL),
+  : buffer_queue(NULL),
     pipeline(NULL),
     decoding_pipeline(""),
     appsrc(NULL)
@@ -32,7 +30,11 @@ on_gst_buffer(GstElement *element,
               VideoDecoder *t)
 {
   gst_buffer_ref(buf);
-  t->video_painter->receiveBuffer(GST_BUFFER_DATA(buf), GST_BUFFER_SIZE(buf));
+  for(VideoPainterList::iterator vp = t->video_painters.begin();
+      vp != t->video_painters.end(); ++vp)
+    {
+      (*vp)->receiveBuffer(GST_BUFFER_DATA(buf), GST_BUFFER_SIZE(buf));
+    }
   gst_buffer_unref(buf);
 }
 
@@ -100,7 +102,7 @@ int
 VideoDecoder::initAndStart(int argc, 
 			   char **argv, 
 			   const char *dec_pipeline,
-			   VideoPainter *video_painter,
+			   const VideoPainterList &vps,
 			   BufferQueue *buffer_queue)
 {
   const gchar *nano_str;
@@ -122,7 +124,7 @@ VideoDecoder::initAndStart(int argc,
       "cockpit video system");
 
   this->decoding_pipeline = dec_pipeline;
-  this->video_painter = video_painter;
+  this->video_painters = vps;
   this->buffer_queue = buffer_queue;
 
   this->pipeline = 

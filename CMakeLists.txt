@@ -81,6 +81,7 @@ SET(CPPFILES
     ${PROJECT_BINARY_DIR}/actuators.cpp
     src/AnimationController.cpp
     src/toanaglyph.cpp
+    src/toedge.cpp
     src/TxtAreaPainter.cpp
     src/VideoPainter.cpp
     src/PrintStatusMsg.cpp
@@ -131,6 +132,7 @@ SET(HEADERS
     src/SetStatusMsgCmd.h
     src/AnimationCmd.h
     src/toanaglyph.h
+    src/toedge.h
     src/TxtAreaPainter.h
     src/VideoPainter.h
     src/rect.h

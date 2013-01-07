@@ -32,6 +32,8 @@ class VisualizationManager
   AnimationCmdMap sensor_animations_map;
   TileManager tile_manager;
   VideoPainter video_painter;
+  EdgeVideoPainter edge_video_painter;
+  VideoPainterList video_painters;
 
  private:
   DefaultRenderer* renderer;

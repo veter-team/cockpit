@@ -256,7 +256,7 @@ IceApp::run(int argc, char *argv[])
 	{
 	  this->video_decoder.initAndStart(argc, argv, 
 					   dec_pipeline.c_str(),
-					   &this->visuals.video_painter,
+					   this->visuals.video_painters,
 					   &this->buffer_queue);
 				       
 	  SensorFrameReceiverIPtr camera_callback = 

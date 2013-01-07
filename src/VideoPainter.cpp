@@ -5,6 +5,7 @@
 #include "VideoPainter.h"
 #include "PrintStatusMsg.h"
 #include "toanaglyph.h"
+#include "toedge.h"
 #include <stdio.h>
 #include <SDL.h>
 
@@ -63,14 +64,7 @@ VideoPainter::receiveBuffer(unsigned char *data, size_t size)
       if(size != this->framewidth * this->frameheight * 4)
         fprintf(stderr, "strange buffer size received from gst\n");
 
-      if(this->paint_stereo)
-        {
-          IplImage *image = frameToAnaglyph(data, this->framewidth, this->frameheight);
-          memcpy(this->texdata, image->imageData, size);
-          cvReleaseImage(&image);
-        }
-      else
-        memcpy(this->texdata, data, size);
+      this->processImageBuffer(data, size);
 
       // Trigger repaint
       SDL_Event event;
@@ -83,6 +77,20 @@ VideoPainter::receiveBuffer(unsigned char *data, size_t size)
 
   if(SDL_mutexV(this->mut) == -1)
     printStatusMessage("Could not unlock texture mutex", this->msgpainter);
+}
+
+
+void 
+VideoPainter::processImageBuffer(unsigned char *data, size_t size)
+{
+  if(this->paint_stereo)
+    {
+      IplImage *image = frameToAnaglyph(data, this->framewidth, this->frameheight);
+      memcpy(this->texdata, image->imageData, size);
+      cvReleaseImage(&image);
+    }
+  else
+    memcpy(this->texdata, data, size);
 }
 
 
@@ -113,4 +121,21 @@ VideoPainter::paint() const
 
   if(SDL_mutexV(this->mut) == -1)
     printStatusMessage("Could not unlock texture mutex", this->msgpainter);
+}
+
+
+EdgeVideoPainter::EdgeVideoPainter(TxtAreaPainter *painter,
+                           size_t width, 
+                           size_t height)
+  : VideoPainter(painter, width, height)
+{
+}
+
+
+void 
+EdgeVideoPainter::processImageBuffer(unsigned char *data, size_t size)
+{
+  Mat edges;
+  frameToEdge(data, this->framewidth, this->frameheight, edges);
+  memcpy(this->texdata, edges.data, size);
 }

@@ -7,6 +7,8 @@
 
 #include <SDL_opengl.h>
 #include <SDL_thread.h>
+#include <vector>
+
 
 class TxtAreaPainter;
 
@@ -17,7 +19,7 @@ class VideoPainter
   VideoPainter(TxtAreaPainter *painter, 
                size_t width = 640, 
                size_t height = 480);
-  ~VideoPainter();
+  virtual ~VideoPainter();
 
  public:
   void setTextureId(GLuint id);
@@ -26,7 +28,8 @@ class VideoPainter
 
   void setStereo(bool is_stereo);
 
- private:
+ protected:
+  virtual void processImageBuffer(unsigned char *data, size_t size);
   void setupTexture();
 
   TxtAreaPainter *msgpainter;
@@ -37,5 +40,18 @@ class VideoPainter
   GLuint videotex;
 };
 
+typedef std::vector<VideoPainter*> VideoPainterList;
+
+
+class EdgeVideoPainter : public VideoPainter
+{
+ public:
+  EdgeVideoPainter(TxtAreaPainter *painter, 
+		   size_t width = 640, 
+		   size_t height = 480);
+
+ protected:
+  virtual void processImageBuffer(unsigned char *data, size_t size);
+};
 
 #endif // __VIDEOPAINTER_H

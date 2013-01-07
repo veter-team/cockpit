@@ -17,9 +17,12 @@
 
 VisualizationManager::VisualizationManager()
   : video_painter(&msg_painter),
+    edge_video_painter(&msg_painter),
     renderer(NULL),
     gps_painter(&msg_painter, 256, 256)
 {
+  this->video_painters.push_back(&video_painter);
+  this->video_painters.push_back(&edge_video_painter);
 }
 
 
@@ -249,34 +252,42 @@ VisualizationManager::init(Ice::LoggerPtr &log, Ice::PropertiesPtr props)
 	    }
 	}
 
-      str_prop = props->getProperty("UI.VideoImageId");
-      if(str_prop.empty())
-        {
-          this->logger->print("Property UI.VideoImageId is not specified.");
-          this->logger->print("There will be no video displayed.");
-        }
-      else
-        {
-          if(renderer->texture_names.empty())
+      std::string video_img_props[] = {
+	std::string("UI.VideoImage1Id"), 
+	std::string("UI.VideoImage2Id")
+      };
+
+      for(size_t i = 0; i < sizeof(video_img_props) / sizeof(video_img_props[0]); ++i)
+	{
+	  str_prop = props->getProperty(video_img_props[i]);
+	  if(str_prop.empty())
 	    {
-	      this->logger->print("Texture list is empty.");
+	      this->logger->print(std::string("Property ") + video_img_props[i] + " is not specified.");
 	      this->logger->print("There will be no video displayed.");
 	    }
-          else
+	  else
 	    {
-	      DefaultRenderer::TextureNameMap::const_iterator tex 
-		= renderer->texture_names.begin();
-	      Image::ImageID id = {str_prop, tex->first.doc_uri};
-	      tex = renderer->texture_names.find(id);
-	      if(tex == renderer->texture_names.end())
+	      if(renderer->texture_names.empty())
 		{
-		  this->logger->print(std::string("Video texture with specified name not found: ") + str_prop);
+		  this->logger->print("Texture list is empty.");
 		  this->logger->print("There will be no video displayed.");
 		}
 	      else
-		video_painter.setTextureId(tex->second);
+		{
+		  DefaultRenderer::TextureNameMap::const_iterator tex 
+		    = renderer->texture_names.begin();
+		  Image::ImageID id = {str_prop, tex->first.doc_uri};
+		  tex = renderer->texture_names.find(id);
+		  if(tex == renderer->texture_names.end())
+		    {
+		      this->logger->print(std::string("Video texture with specified name not found: ") + str_prop);
+		      this->logger->print("There will be no video displayed.");
+		    }
+		  else
+		    this->video_painters[i]->setTextureId(tex->second);
+		}
 	    }
-        }
+	}
 
       str_prop = props->getProperty("UI.GPSImageId");
       if(str_prop.empty())
@@ -323,7 +334,10 @@ VisualizationManager::init(Ice::LoggerPtr &log, Ice::PropertiesPtr props)
 void 
 VisualizationManager::drawScene()
 {
-  this->video_painter.paint();
+  for(VideoPainterList::iterator vp = this->video_painters.begin();
+      vp != this->video_painters.end(); ++vp)
+    (*vp)->paint();
+
   this->gps_painter.paint();
   this->renderer->render();
   SDL_GL_SwapBuffers(); // Swap the buffers to not be left with a clear screen
