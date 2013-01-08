@@ -21,7 +21,7 @@ VideoPainter::VideoPainter(TxtAreaPainter *painter,
 {
   this->mut = SDL_CreateMutex();
   this->texdata = new unsigned char[this->framewidth * this->frameheight * 4];
-  memset(this->texdata, 0x80808080, this->framewidth * this->frameheight * 4);
+  //memset(this->texdata, 0x80808080, this->framewidth * this->frameheight * 4);
 }
 
 
@@ -64,15 +64,16 @@ VideoPainter::receiveBuffer(unsigned char *data, size_t size)
       if(size != this->framewidth * this->frameheight * 4)
         fprintf(stderr, "strange buffer size received from gst\n");
 
-      this->processImageBuffer(data, size);
-
-      // Trigger repaint
-      SDL_Event event;
-      event.type = SDL_USEREVENT;
-      event.user.code = 0;
-      event.user.data1 = 0;
-      event.user.data2 = 0;
-      SDL_PushEvent(&event);
+      if(this->processImageBuffer(data, size))
+	{
+	  // Trigger repaint
+	  SDL_Event event;
+	  event.type = SDL_USEREVENT;
+	  event.user.code = 0;
+	  event.user.data1 = 0;
+	  event.user.data2 = 0;
+	  SDL_PushEvent(&event);
+	}
     }
 
   if(SDL_mutexV(this->mut) == -1)
@@ -80,7 +81,7 @@ VideoPainter::receiveBuffer(unsigned char *data, size_t size)
 }
 
 
-void 
+bool 
 VideoPainter::processImageBuffer(unsigned char *data, size_t size)
 {
   if(this->paint_stereo)
@@ -91,6 +92,7 @@ VideoPainter::processImageBuffer(unsigned char *data, size_t size)
     }
   else
     memcpy(this->texdata, data, size);
+  return true;
 }
 
 
@@ -127,15 +129,22 @@ VideoPainter::paint() const
 EdgeVideoPainter::EdgeVideoPainter(TxtAreaPainter *painter,
                            size_t width, 
                            size_t height)
-  : VideoPainter(painter, width, height)
+  : VideoPainter(painter, width, height),
+    frame_counter(0)
 {
 }
 
 
-void 
+bool 
 EdgeVideoPainter::processImageBuffer(unsigned char *data, size_t size)
 {
-  Mat edges;
-  frameToEdge(data, this->framewidth, this->frameheight, edges);
-  memcpy(this->texdata, edges.data, size);
+  ++this->frame_counter;
+  //if(this->frame_counter % 5 == 0)
+    {
+      // Process only every 5-th frame
+      Mat edges;
+      frameToEdge(data, this->framewidth, this->frameheight, edges);
+      memcpy(this->texdata, edges.data, size);
+    }
+  return false;
 }

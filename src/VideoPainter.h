@@ -29,7 +29,7 @@ class VideoPainter
   void setStereo(bool is_stereo);
 
  protected:
-  virtual void processImageBuffer(unsigned char *data, size_t size);
+  virtual bool processImageBuffer(unsigned char *data, size_t size);
   void setupTexture();
 
   TxtAreaPainter *msgpainter;
@@ -51,7 +51,9 @@ class EdgeVideoPainter : public VideoPainter
 		   size_t height = 480);
 
  protected:
-  virtual void processImageBuffer(unsigned char *data, size_t size);
+  virtual bool processImageBuffer(unsigned char *data, size_t size);
+
+  size_t frame_counter;
 };
 
 #endif // __VIDEOPAINTER_H
