@@ -1,3 +1,6 @@
+/* Copyright (c) 2013 Andrey Nechypurenko
+   See the file COPYING for copying permission.
+*/
 #ifndef __BUFFERQUEUE_H
 #define __BUFFERQUEUE_H
 

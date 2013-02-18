@@ -1,3 +1,6 @@
+/* Copyright (c) 2013 Andrey Nechypurenko
+   See the file COPYING for copying permission.
+*/
 #include <string>
 
 // OpenGL Extension "autoloader"
@@ -64,7 +67,7 @@ VisualizationManager::init(Ice::LoggerPtr &log, Ice::PropertiesPtr props)
 
   const SDL_VideoInfo *video_info = SDL_GetVideoInfo();
 
-  int screen_width = video_info->current_w / 10 * 9;
+  int screen_width = video_info->current_w / 10 * 7;
   int screen_height = video_info->current_h / 10 * 9;
   // Get a SDL surface
   SDL_Surface *surface = SDL_SetVideoMode(screen_width, 

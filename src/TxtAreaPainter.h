@@ -1,7 +1,6 @@
-/* Copyright (c) 2010 Andrey Nechypurenko
-   See the file LICENSE for copying permission. 
+/* Copyright (c) 2013 Andrey Nechypurenko
+   See the file COPYING for copying permission.
 */
-
 #ifndef __TXTAREAPAINTER_H
 #define __TXTAREAPAINTER_H
 

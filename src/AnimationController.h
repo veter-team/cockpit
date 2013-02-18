@@ -1,3 +1,6 @@
+/* Copyright (c) 2013 Andrey Nechypurenko
+   See the file COPYING for copying permission.
+*/
 #ifndef __ANIMATIONCONTROLLER_H
 #define __ANIMATIONCONTROLLER_H
 

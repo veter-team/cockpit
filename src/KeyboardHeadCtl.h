@@ -1,3 +1,6 @@
+/* Copyright (c) 2013 Andrey Nechypurenko
+   See the file COPYING for copying permission.
+*/
 #ifndef __KEYBOARDHEADCTL_H
 #define __KEYBOARDHEADCTL_H
 
